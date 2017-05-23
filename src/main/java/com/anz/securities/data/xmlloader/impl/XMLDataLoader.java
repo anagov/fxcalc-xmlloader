@@ -25,26 +25,48 @@ import com.anz.securities.entities.impl.ConversionRateImpl;
 import com.anz.securities.entities.impl.ConversionRuleImpl;
 import com.anz.securities.entities.impl.CurrencyImpl;
 
+/**
+ * Provides an implementation to load the data
+ * 
+ * @author Anand Katti
+ *
+ */
 public class XMLDataLoader implements DataLoader {
 	private static Logger logger = LoggerFactory.getLogger(XMLDataLoader.class);
 
+	/**
+	 * Loads both the rules data and the rates data
+	 * 
+	 * @see com.anz.securities.dataloader.spi.DataLoader.loadData
+	 */
 	public CurrencyConverter loadData(final LoaderConfig config) throws UnsuccessfulDataLoading {
 		CurrencyConverter converter = new CurrencyConverter();
-		Map<String, Currency> currencyRuleMap = loadConversionRules((String) config.getConfigValue(Constants.CONVERSION_RULE_RESOURCE_KEY));
-		List<ConversionRate> listRates = loadConversionRates((String) config.getConfigValue(Constants.CONVERSION_RATE_RESOURCE_KEY));
+		Map<String, Currency> currencyRuleMap = loadConversionRules(
+				(String) config.getConfigValue(Constants.CONVERSION_RULE_RESOURCE_KEY));
+		List<ConversionRate> listRates = loadConversionRates(
+				(String) config.getConfigValue(Constants.CONVERSION_RATE_RESOURCE_KEY));
 		converter.setMapCurrecy(currencyRuleMap);
 		converter.setListRates(listRates);
 		return converter;
 	}
 
+	/**
+	 * Loads the conversion rate data
+	 * 
+	 * @param resource
+	 * @return rateList
+	 * @throws UnsuccessfulDataLoading
+	 */
 	private List<ConversionRate> loadConversionRates(final String resource) throws UnsuccessfulDataLoading {
 		try {
 			logger.debug("Loading data from:", resource);
-			List<ConversionRate> rateList = new ArrayList<ConversionRate>();
+			List<ConversionRate> rateList = new ArrayList<>();
 			Document doc = XMLLoaderUtil.getXMLDocument(resource);
 
 			NodeList nList = doc.getElementsByTagName(Constants.CONVERTION_RATE);
-			String srcCur, destCur, rate;
+			String srcCur;
+			String destCur;
+			String rate;
 
 			for (int temp = 0; temp < nList.getLength(); temp++) {
 				Node nNode = nList.item(temp);
@@ -60,15 +82,22 @@ public class XMLDataLoader implements DataLoader {
 			logger.debug("Loading data completed with size:", rateList.size());
 			return rateList;
 		} catch (Exception ex) {
-			throw new UnsuccessfulDataLoading("Generic Exception Loading Currencies" + ex.getMessage());
+			throw new UnsuccessfulDataLoading(ex.getMessage(), ex);
 		}
 
 	}
 
+	/**
+	 * Loads the rules data
+	 * 
+	 * @param resource
+	 * @return ruleMap
+	 * @throws UnsuccessfulDataLoading
+	 */
 	private Map<String, Currency> loadConversionRules(final String resource) throws UnsuccessfulDataLoading {
 		try {
 			logger.debug("Loading data from:", resource);
-			Map<String, Currency> currencyRuleMap = new HashMap<String, Currency>();
+			Map<String, Currency> currencyRuleMap = new HashMap<>();
 
 			Document doc = XMLLoaderUtil.getXMLDocument(resource);
 			NodeList nList = doc.getElementsByTagName(Constants.SOURCE_CURRENCY);
@@ -80,7 +109,7 @@ public class XMLDataLoader implements DataLoader {
 				int decimal = Integer.parseInt(eElement.getAttribute(Constants.SUPPORTED_DECIMAL));
 
 				NodeList childNodes = eElement.getElementsByTagName(Constants.DESTINATION_CURRENCY);
-				List<ConversionRule> listConversionRules = new ArrayList<ConversionRule>();
+				List<ConversionRule> listConversionRules = new ArrayList<>();
 				for (int temp1 = 0; temp1 < childNodes.getLength(); temp1++) {
 					Node nNode1 = childNodes.item(temp1);
 					Element eElement1 = (Element) nNode1;
@@ -95,9 +124,8 @@ public class XMLDataLoader implements DataLoader {
 			logger.debug("Loading data completed with size:", currencyRuleMap.size());
 			return currencyRuleMap;
 
-		} catch (Exception ex) {	
-			throw new UnsuccessfulDataLoading("Generic Exception Loading Currencies:" + ex.getMessage());
+		} catch (Exception ex) {
+			throw new UnsuccessfulDataLoading("Generic Exception Loading Currencies:", ex);
 		}
 	}
 }
-
